@@ -33,6 +33,7 @@ public final class ReflectUtils {
 			
 			return SUCCESS;
 		} catch (Exception e) {
+			System.err.println("tryCallVoidMethod Err:"+e.getMessage());
 		}
 		
 		return FAILUE;
@@ -63,6 +64,7 @@ public final class ReflectUtils {
 			method.setAccessible(true);
 			return method.invoke(object, (Object[])params);
 		} catch (Exception e) {
+			System.err.println("tryCallMethod Err:"+e.getMessage());
 		}
 		
 		return null;
