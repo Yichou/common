@@ -18,6 +18,14 @@ import android.util.Log;
 import com.yichou.common.FileUtils;
 import com.yichou.common.HttpUtils;
 
+
+
+/**
+ * 下载器
+ * 
+ * @author Yichou 2013-9-9
+ *
+ */
 public class Downloader implements Runnable {
 	static final String TAG = "Downloader";
 	
@@ -25,10 +33,11 @@ public class Downloader implements Runnable {
 	
 	private String fileSavePath;
 	private String urlString;
-	private DownloadListener listener;
+	private IDownloadListener listener;
 	private boolean canceled = false;
 	private long mTotalLength, mCurLength;
 	private Context mContext;
+	
 	
 	public String getFileSavePath() {
 		return fileSavePath;
@@ -114,7 +123,7 @@ public class Downloader implements Runnable {
 			File file2 = new File(fileSavePath);
 			if(file2.exists()) {
 				if(listener != null) { //文件已存在，直接回调成功
-					listener.onStart(mTotalLength);
+					listener.onStart(mTotalLength, mTotalLength);
 					listener.onFinish();
 					return;
 				}
@@ -159,8 +168,7 @@ public class Downloader implements Runnable {
 			is = new BufferedInputStream(conn.getInputStream()); //使用 BufferedInputStream 提高性能
 			//开始回调
 			if(listener != null) 
-				listener.onStart(mTotalLength);
-
+				listener.onStart(startPos, mTotalLength);
 			Log.d(TAG, "begin from " + startPos);
 
 			do {
@@ -186,11 +194,11 @@ public class Downloader implements Runnable {
 					listener.onCancel();
 			}
 		} catch (Exception e) {
-			if(listener != null) listener.onError(e.getClass().getName());
+			if(listener != null) listener.onError(e.getClass().getName() + ": " + e.getMessage());
 		} finally {
 			try {
 				raf.close();
-			} catch (Exception e1) {
+			} catch (Exception e) {
 			}
 			try {
 				is.close();

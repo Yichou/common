@@ -33,14 +33,19 @@ import org.apache.http.util.EntityUtils;
 import android.content.Context;
 import android.util.Log;
 
-
+/**
+ * 封装 Http 
+ * 
+ * @author Yichou 2013-9-9
+ *
+ */
 public class HttpUtils {
 	private static final String LOG_TAG = "HttpUtils";
 	public static final String CHARSET = HTTP.UTF_8;
 //	private static final String USERAGENT = "Mozilla/5.0(Linux;U;Android 2.2.1;en-us;Nexus One Build.FRG83) " +
 //			"AppleWebKit/553.1(KHTML,like Gecko) " +
 //			"Version/4.0 Mobile Safari/533.1";
-	public static final String USERAGENT = "android";
+	public static final String USERAGENT = "Freesky-Android";
 	
 	
 	private static HttpClient mClient;
@@ -82,6 +87,7 @@ public class HttpUtils {
 		return get(context, new HttpGet(uri));
 	}
 	
+	@SuppressWarnings("deprecation")
 	public static HttpHost getProxyHttpHost(Context context) {
 		if(NetUtils.NETTYPE_WAP == NetUtils.getNetworkType(context)){
 			// 获取默认代理主机ip
@@ -98,6 +104,7 @@ public class HttpUtils {
 		return null;
 	}
 	
+	@SuppressWarnings("deprecation")
 	public static Proxy getProxyProxy(Context context) {
 		if(NetUtils.NETTYPE_WAP == NetUtils.getNetworkType(context)){
 			// 获取默认代理主机ip

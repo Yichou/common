@@ -3,6 +3,7 @@ package com.yichou.download;
 import java.io.File;
 import java.nio.channels.FileLock;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 import android.content.Context;
 import android.widget.Toast;
@@ -19,11 +20,35 @@ public final class DownloadManager {
 	private static final HashMap<String, Downloader> hashMap = new HashMap<String, Downloader>();
 	
 	public static void add(Downloader downloader) {
-		hashMap.put(downloader.getFileSavePath(), downloader);
+		synchronized (hashMap) {
+			hashMap.put(downloader.getFileSavePath(), downloader);
+		}
 	}
 	
 	public static void remove(Downloader downloader) {
-		hashMap.remove(downloader.getFileSavePath());
+		synchronized (hashMap) {
+			hashMap.remove(downloader.getFileSavePath());
+		}
+	}
+	
+	public static void stopAll() {
+		synchronized (hashMap) {
+			for(Entry<String, Downloader> e : hashMap.entrySet()){
+				e.getValue().cancel();
+			}
+		}
+	}
+	
+	public static boolean isIdle() {
+		synchronized (hashMap) {
+			return hashMap.isEmpty();
+		}
+	}
+	
+	public static boolean has(String fileSavePath) {
+		synchronized (hashMap) {
+			return hashMap.containsKey(fileSavePath);
+		}
 	}
 	
 	/**
@@ -33,7 +58,7 @@ public final class DownloadManager {
 	 * @return
 	 */
 	public static boolean isFileDownloadIng(String fileSavePath) {
-		if(hashMap.containsKey(fileSavePath)) //进程内
+		if(has(fileSavePath)) //进程内
 			return true;
 			
 		File lckFile = new File(fileSavePath + ".lck"); //进程间
@@ -47,12 +72,6 @@ public final class DownloadManager {
 	
 	/**
 	 * 启动一个下载（异步）
-	 * 
-	 * @param context
-	 * @param localPath 文件存储路径
-	 * @param serverPath 下载路径
-	 * @param listener 
-	 * @return
 	 */
 	public static Downloader start(Context context, String localPath, String serverPath, DownloadListener listener) {
 		if (!FileUtils.isSDMounted()) {
