@@ -1,7 +1,7 @@
 package com.yichou.download;
 
 public abstract class DownloadListener implements IDownloadListener {
-	public void onStart(long total){
+	public void onStart(long start, long total){
 		
 	}
 
@@ -12,6 +12,7 @@ public abstract class DownloadListener implements IDownloadListener {
 	 * @param prog 0~100
 	 */
 	public void onProgress(long cur, byte prog){
+		
 	}
 
 	public void onCancel(){

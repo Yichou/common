@@ -33,7 +33,9 @@ public final class ReflectUtils {
 			
 			return SUCCESS;
 		} catch (Exception e) {
-			System.err.println("tryCallVoidMethod Err:"+e.getMessage());
+			System.err.println("tryCallVoidMethod Err:" 
+					+ e.getClass().getCanonicalName() + ": " + e.getMessage() + "\n"
+					+ name);
 		}
 		
 		return FAILUE;
@@ -64,7 +66,9 @@ public final class ReflectUtils {
 			method.setAccessible(true);
 			return method.invoke(object, (Object[])params);
 		} catch (Exception e) {
-			System.err.println("tryCallMethod Err:"+e.getMessage());
+			System.err.println("tryCallVoidMethod Err:" 
+					+ e.getClass().getCanonicalName() + ": " + e.getMessage() + "\n"
+					+ name);
 		}
 		
 		return null;

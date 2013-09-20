@@ -6,7 +6,7 @@ public interface IDownloadListener {
 	 * 
 	 * @param total 总字节数
 	 */
-	public void onStart(long total);
+	public void onStart(long start, long total);
 	
 	/**
 	 * 下载过程回调
