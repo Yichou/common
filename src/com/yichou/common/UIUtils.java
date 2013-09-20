@@ -1,0 +1,26 @@
+package com.yichou.common;
+
+import android.content.Context;
+import android.content.res.Resources;
+import android.util.DisplayMetrics;
+import android.widget.Toast;
+
+public class UIUtils {
+
+	public static void ToastMessage(Context cont, String msg) {
+		Toast.makeText(cont, msg, Toast.LENGTH_SHORT).show();
+	}
+
+	public static void ToastMessage(Context cont, int msg) {
+		Toast.makeText(cont, msg, Toast.LENGTH_SHORT).show();
+	}
+
+	public static void ToastMessage(Context cont, String msg, int time) {
+		Toast.makeText(cont, msg, time).show();
+	}
+
+	public static int pix2dp(Resources r, int pix) {
+		DisplayMetrics metrics = r.getDisplayMetrics();
+		return Math.round(pix*metrics.density);
+	}
+}
