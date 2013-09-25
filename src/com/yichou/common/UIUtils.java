@@ -23,4 +23,13 @@ public class UIUtils {
 		DisplayMetrics metrics = r.getDisplayMetrics();
 		return Math.round(pix*metrics.density);
 	}
+	
+	public static int revColor(int color) {
+		int a = (color >> 24);
+		int r = 0xFF - (color >> 16) & 0xFF;
+		int g = 0xFF - (color >> 8) & 0xFF;
+		int b = 0xFF - (color) & 0xFF;
+		
+		return ((a<<24)|(r<<16)|(g<<8)|b);
+	}
 }
