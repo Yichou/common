@@ -389,7 +389,29 @@ public final class FileUtils {
 
 		return FAILED;
 	}
+	
+	public static int assetToFileIfNotExist(AssetManager asset, String assetName, File file) {
+		InputStream is = null;
 
+		try {
+			is = asset.open(assetName);
+			
+			if(!checkFileBySize(file, is.available())) {
+				return streamToFile(file, is, false);
+			} else {
+				return SUCCESS;
+			}
+		} catch (Exception e) {
+		} finally {
+			try {
+				is.close();
+			} catch (Exception e) {
+			}
+		}
+
+		return FAILED;
+	}
+	
 	/**
 	 * 从 Assets 文件读取文件全部，并转为字符串
 	 * 
@@ -662,5 +684,20 @@ public final class FileUtils {
 	public static String getSDRoot() {
 		return Environment.getExternalStorageDirectory().getAbsolutePath()
 				+ File.separator;
+	}
+	
+	/**
+	 * 2013-10-8 by yichou
+	 * 
+	 * 检查一个文件本地是否存在，通过名称，长度，如果2者都符合，返回 true，否则返回 false
+	 * 
+	 * @param file
+	 * @param size
+	 */
+	public static boolean checkFileBySize(File file, long size) {
+		if(!file.exists() || !file.isFile() || (file.length() != size))
+			return false;
+		
+		return true;
 	}
 }
