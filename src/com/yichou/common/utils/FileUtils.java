@@ -254,6 +254,10 @@ public final class FileUtils {
 		return FAILED;
 	}
 
+	public static int bytesToFile(File file, byte[] data, boolean isAppend) {
+		return bytesToFile(file, data, 0, data.length, isAppend);
+	}
+	
 	public static int bytesToFile(File file, byte[] data) {
 		return bytesToFile(file, data, 0, data.length, false);
 	}

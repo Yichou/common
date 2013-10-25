@@ -42,49 +42,89 @@ import android.util.Log;
  * @author Yichou 2013-9-9
  *
  * 完善 2013-9-27 by:yichou
+ * 2013-10-23 增加两种模式创建 httpClinet by:yichou
+ * 
  */
 public class HttpUtils {
 	private static final String LOG_TAG = "HttpUtils";
 	public static final String CHARSET = HTTP.UTF_8;
-//	private static final String USERAGENT = "Mozilla/5.0(Linux;U;Android 2.2.1;en-us;Nexus One Build.FRG83) " +
-//			"AppleWebKit/553.1(KHTML,like Gecko) " +
-//			"Version/4.0 Mobile Safari/533.1";
-	public static final String USERAGENT = "Freesky-Android";
+	public static final String USERAGENT = "FsSDK-Android";
 	
 	
 	private static HttpClient mClient;
 	
-	public static synchronized HttpClient getHttpClient() {
-		if(mClient != null)
-			return mClient;
+	/**
+	 * 获取  httpClient ，单实例，多线程模式
+	 * 
+	 * @param context
+	 * @return
+	 */
+	public static synchronized HttpClient getHttpClientSingle(Context context) {
+		if (mClient == null) {
+			HttpParams params = new BasicHttpParams();
 
-		HttpParams params = new BasicHttpParams();
+			// 设置协议参数
+			HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
+			HttpProtocolParams.setContentCharset(params, CHARSET);
+			HttpProtocolParams.setUseExpectContinue(params, true);
+			HttpProtocolParams.setUserAgent(params, USERAGENT);
+
+			// 超时设置
+			// 1.从连接池取连接超时时间
+			ConnManagerParams.setTimeout(params, 1000);
+			// 2.建立连接超时时间，该socket连接的超时时间
+			HttpConnectionParams.setConnectionTimeout(params, 4000); // 4S
+			// 3.socket 请求超时，从服务器获取响应数据需要等待的时间
+			HttpConnectionParams.setSoTimeout(params, 10000); // 10S
+			HttpConnectionParams.setSocketBufferSize(params, 16 * 1024); // 16K
+
+			// 设置模式
+			SchemeRegistry reg = new SchemeRegistry();
+			reg.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+			reg.register(new Scheme("https", SSLSocketFactory.getSocketFactory(), 443));
+
+			// 使用线程安全的连接管理来创建HttpClient
+			ClientConnectionManager connMgr = new ThreadSafeClientConnManager(params, reg);
+			mClient = new DefaultHttpClient(connMgr, params);
+		}
 		
-		//设置协议参数
-		HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
-		HttpProtocolParams.setContentCharset(params, CHARSET);
-		HttpProtocolParams.setUseExpectContinue(params, true);
-		HttpProtocolParams.setUserAgent(params, USERAGENT);
-		
-		//超时设置
-		//1.从连接池取连接超时时间
-		ConnManagerParams.setTimeout(params, 1000);
-		//2.建立连接超时时间，该socket连接的超时时间
-		HttpConnectionParams.setConnectionTimeout(params, 4000); //4S
-		//3.socket 请求超时，从服务器获取响应数据需要等待的时间
-		HttpConnectionParams.setSoTimeout(params, 10000); //10S
-		HttpConnectionParams.setSocketBufferSize(params, 16 * 1024); // 16K
-		
-		//设置模式
-		SchemeRegistry reg = new SchemeRegistry();
-		reg.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
-		reg.register(new Scheme("https", SSLSocketFactory.getSocketFactory(), 443));
-		
-		// 使用线程安全的连接管理来创建HttpClient
-        ClientConnectionManager connMgr = new ThreadSafeClientConnManager(params, reg);
-        mClient = new DefaultHttpClient(connMgr, params);
+		mClient.getParams().setParameter(ConnRouteParams.DEFAULT_PROXY, getProxyHttpHost(context));
 
 		return mClient;
+	}
+	
+	/**
+	 * 创建 httpClient
+	 * 
+	 * @param context
+	 * @return
+	 */
+	public static HttpClient newHttpClient(Context context) {
+		HttpParams params = new BasicHttpParams();
+		// UserAgent
+		HttpProtocolParams.setUserAgent(params, USERAGENT);
+		HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);// http-1.1
+		// 设置连接超时和 Socket 超时，以及 Socket 缓存大小:
+		HttpConnectionParams.setConnectionTimeout(params, 4000); // 4S
+		HttpConnectionParams.setSoTimeout(params, 10000); // 10S
+		HttpConnectionParams.setSocketBufferSize(params, 16 * 1024); // 16K
+
+		/**
+		 * 创建一个 HttpClient 实例: 注意: HttpClient httpClient = new HttpClient();
+		 * 是CommonsHttpClient中的用法, 在 Android 1.5 中我们需要使用 Apache 的缺省实现
+		 * DefaultHttpClient.
+		 */
+		HttpClient mHttpClient = new DefaultHttpClient(params);
+		mHttpClient.getParams().setBooleanParameter("http.protocol.expect-continue", false);
+
+		//代理
+		mHttpClient.getParams().setParameter(ConnRouteParams.DEFAULT_PROXY, getProxyHttpHost(context));
+
+		return mHttpClient;
+	}
+	
+	public static HttpClient getHttpClient(Context context) {
+		return getHttpClientSingle(context);
 	}
 	
 	public static String get(Context context, String uri) throws Exception {
@@ -104,7 +144,7 @@ public class HttpUtils {
 	/**
 	 * 2013-9-27 判断当前网络是否需要代理
 	 */
-	public static boolean needProxy(Context context) {
+	public static boolean needProxy1(Context context) {
 		NetworkInfo ni = getActiveNetworkInfo(context);
 		
 		if(ni==null
@@ -119,8 +159,27 @@ public class HttpUtils {
 			return false;
 		
 		String apn = ni.getExtraInfo().toLowerCase(Locale.getDefault());
-		if (apn.contains("cmwap")) 
+		if (apn.contains("wap") 
+				|| apn.contains("uniwap") 
+				|| apn.contains("3gwap")) 
 			return true;
+		
+		return false;
+	}
+	
+	public static boolean needProxy(Context context) {
+		NetworkInfo networkInfo = getActiveNetworkInfo(context);
+		
+		// 如果是使用的运营商网络
+		if (networkInfo != null && networkInfo.getType() == ConnectivityManager.TYPE_MOBILE) {
+			// 获取默认代理主机ip
+			String host = android.net.Proxy.getDefaultHost();
+			// 获取端口
+			int port = android.net.Proxy.getDefaultPort();
+			if (host != null && port != -1) {
+				return true;
+			} 
+		} 
 		
 		return false;
 	}
@@ -172,9 +231,7 @@ public class HttpUtils {
 	}
 	
 	public static String get(Context context, HttpGet get) throws Exception {
-		getHttpClient().getParams().setParameter(ConnRouteParams.DEFAULT_PROXY, getProxyHttpHost(context));
-		
-		HttpResponse rsp = getHttpClient().execute(get);
+		HttpResponse rsp = getHttpClient(context).execute(get);
 		int code = rsp.getStatusLine().getStatusCode();
 		
 		if (code == HttpStatus.SC_OK) {
@@ -185,7 +242,7 @@ public class HttpUtils {
 				Log.e(LOG_TAG, "rsp.getEntity FAIL!");
 			}
 		} else {
-			Log.e("", "get() HttpStatus ERROR, code = " + code);
+			Log.e(LOG_TAG, "get() HttpStatus ERROR, code = " + code);
 		}
 
 		return null;
@@ -208,9 +265,7 @@ public class HttpUtils {
 	}
 	
 	public static String post(Context context, HttpPost post) throws Exception {
-		getHttpClient().getParams().setParameter(ConnRouteParams.DEFAULT_PROXY, getProxyHttpHost(context));
-		
-		HttpResponse rsp = getHttpClient().execute(post);
+		HttpResponse rsp = getHttpClient(context).execute(post);
 		int code = rsp.getStatusLine().getStatusCode();
 
 		if (code == HttpStatus.SC_OK) {
@@ -221,7 +276,7 @@ public class HttpUtils {
 				Log.e(LOG_TAG, "rsp.getEntity FAIL!");
 			}
 		} else {
-			Log.e("", "post() HttpStatus ERROR, code = " + code);
+			Log.e(LOG_TAG, "post() HttpStatus ERROR, code = " + code);
 		}
 
 		return null;
