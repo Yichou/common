@@ -79,7 +79,7 @@ public final class DownloadManager {
 	public static Downloader start(Context context, String localPath, String serverPath, DownloadListener listener) {
 		String dataDir = context.getFilesDir().getParent();
 		
-		if (!FileUtils.isSDAvailable(32) && !serverPath.startsWith(dataDir)) {
+		if (!FileUtils.isSDAvailable(24) && !localPath.startsWith(dataDir)) {
 			System.err.println("sdcard not available!");
 			return null;
 		}
