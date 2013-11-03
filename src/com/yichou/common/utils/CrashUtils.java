@@ -87,17 +87,18 @@ public final class CrashUtils {
 		proxyAM();
 	}
 	
-	public static void proxyAM() {
+	private static void proxyAM() {
 		try {
 			Class<?> class1 = Class.forName("android.app.ActivityManagerNative");
-			Class<?> class2 = Class.forName("android.app.IActivityManager");
 			
 			Method method = class1.getDeclaredMethod("getDefault", (Class[])null);
 			method.setAccessible(true);
 			mAM = method.invoke(null, (Object[])null); //获取原始的 
+
+			Class<?> class2 = mAM.getClass();
 			
-			Object mAM = Proxy.newProxyInstance(class2.getClassLoader(),
-					class2.getInterfaces(),
+			Object proxy = Proxy.newProxyInstance(mAM.getClass().getClassLoader(),
+					mAM.getClass().getInterfaces(),
 					new AMProxy());
 			
 			//static final Singleton<IActivityManager> gDefault
@@ -106,11 +107,11 @@ public final class CrashUtils {
 			Object object = field.get(null);
 			
 			if (object.getClass() == class2) { // 2.2.2~2.3.7
-				field.set(null, mAM);
+				field.set(null, proxy);
 			} else { //4.0 +
 				Field field2 = object.getClass().getSuperclass().getDeclaredField("mInstance");
 				field2.setAccessible(true);
-				field2.set(object, mAM);
+				field2.set(object, proxy);
 			}
 			
 			System.out.println("crash handler enable success!");
