@@ -1,4 +1,4 @@
-package cn.mrpyx.ads.common.utils;
+package com.yichou.common.utils;
 
 import java.util.Locale;
 
