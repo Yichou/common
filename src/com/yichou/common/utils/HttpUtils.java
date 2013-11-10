@@ -3,7 +3,6 @@ package com.yichou.common.utils;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.ArrayList;
-import java.util.Locale;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -141,32 +140,7 @@ public class HttpUtils {
 		return cm.getActiveNetworkInfo();
 	}
 	
-	/**
-	 * 2013-9-27 判断当前网络是否需要代理
-	 */
-	public static boolean needProxy1(Context context) {
-		NetworkInfo ni = getActiveNetworkInfo(context);
-		
-		if(ni==null
-				|| !ni.isAvailable()
-				|| ni.getType() != ConnectivityManager.TYPE_MOBILE)
-			return false;
-
-		String imsi = SysUtils.getImsi(context);
-		if (imsi == null 
-				|| imsi.length()==0
-				|| !imsi.startsWith("46001")) 
-			return false;
-		
-		String apn = ni.getExtraInfo().toLowerCase(Locale.getDefault());
-		if (apn.contains("wap") 
-				|| apn.contains("uniwap") 
-				|| apn.contains("3gwap")) 
-			return true;
-		
-		return false;
-	}
-	
+	@SuppressWarnings("deprecation")
 	public static boolean needProxy(Context context) {
 		NetworkInfo networkInfo = getActiveNetworkInfo(context);
 		
@@ -189,6 +163,7 @@ public class HttpUtils {
 	 * 
 	 * @return 不需要代理返回 null
 	 */
+	@SuppressWarnings("deprecation")
 	public static InetSocketAddress getProxyAddress(Context context) {
 		if(!needProxy(context))
 			return null;
