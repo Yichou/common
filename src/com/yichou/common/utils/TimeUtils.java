@@ -5,8 +5,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
-import android.content.res.Resources;
-
 
 /**
  * 时间、日期、本地化 相关工具类
@@ -19,11 +17,7 @@ public final class TimeUtils {
 	 * @return 当前地域
 	 */
 	public static Locale getLocale(){
-		try {
-			return Resources.getSystem().getConfiguration().locale;
-		} catch (Exception e) {
-		}
-		return Locale.CHINA;
+		return Locale.getDefault();
 	}
 	
 	/**

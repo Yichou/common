@@ -22,3 +22,5 @@ local.properties
 
 # 不能提交的代码
 jni/src/mr
+src/com/yichou/common/utils/CrashUtils.java
+#CrashUtils.java
