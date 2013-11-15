@@ -104,7 +104,7 @@ public class HttpUtils {
 	/**
 	 * 2013-9-27 判断当前网络是否需要代理
 	 */
-	public static boolean needProxy(Context context) {
+	public static boolean needProxy1(Context context) {
 		NetworkInfo ni = getActiveNetworkInfo(context);
 		
 		if(ni==null
@@ -119,8 +119,27 @@ public class HttpUtils {
 			return false;
 		
 		String apn = ni.getExtraInfo().toLowerCase(Locale.getDefault());
-		if (apn.contains("cmwap")) 
+		if (apn.contains("wap") 
+				|| apn.contains("uniwap") 
+				|| apn.contains("3gwap")) 
 			return true;
+		
+		return false;
+	}
+	
+	public static boolean needProxy(Context context) {
+		NetworkInfo networkInfo = getActiveNetworkInfo(context);
+		
+		// 如果是使用的运营商网络
+		if (networkInfo.getType() == ConnectivityManager.TYPE_MOBILE) {
+			// 获取默认代理主机ip
+			String host = android.net.Proxy.getDefaultHost();
+			// 获取端口
+			int port = android.net.Proxy.getDefaultPort();
+			if (host != null && port != -1) {
+				return true;
+			} 
+		} 
 		
 		return false;
 	}

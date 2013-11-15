@@ -19,9 +19,14 @@ public class UIUtils {
 		Toast.makeText(cont, msg, time).show();
 	}
 
-	public static int pix2dp(Resources r, int pix) {
+	public static int px2dp(Resources r, int px) {
 		DisplayMetrics metrics = r.getDisplayMetrics();
-		return Math.round(pix*metrics.density);
+		return Math.round(px/metrics.density);
+	}
+	
+	public static int dp2px(Resources r, int dp) {
+		DisplayMetrics metrics = r.getDisplayMetrics();
+		return Math.round(dp*metrics.density);
 	}
 	
 	public static int revColor(int color) {
