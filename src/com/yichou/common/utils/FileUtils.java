@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.List;
@@ -583,7 +584,6 @@ public final class FileUtils {
 	 * @param file
 	 * @return
 	 */
-	@SuppressWarnings("resource")
 	public static FileLock tryFileLock(File file) {
 		try {
 			checkParentPath(file); // 父目录不存在会导致创建文件锁失败
@@ -703,5 +703,71 @@ public final class FileUtils {
 			return false;
 		
 		return true;
+	}
+	
+	//public static native int setPermissions(String file, int mode, int uid, int gid);
+	public static int setPermissions(String file, int mode) {
+		return setPermissions(file, mode, -1, -1);
+	}
+	
+	public static final int S_IRWXU = 00700;
+	public static final int S_IRUSR = 00400;
+	public static final int S_IWUSR = 00200;
+	public static final int S_IXUSR = 00100;
+
+	public static final int S_IRWXG = 00070;
+	public static final int S_IRGRP = 00040;
+	public static final int S_IWGRP = 00020;
+	public static final int S_IXGRP = 00010;
+
+	public static final int S_IRWXO = 00007;
+	public static final int S_IROTH = 00004;
+	public static final int S_IWOTH = 00002;
+	public static final int S_IXOTH = 00001;
+	
+	private static final Class<?>[] SIG_SET_PERMISSION = 
+		new Class<?>[]{String.class, int.class, int.class, int.class};
+	public static int setPermissions(String file, int mode, int uid, int gid) {
+		try {
+			Class<?> clazz = Class.forName("android.os.FileUtils");
+			Method method = clazz.getDeclaredMethod("setPermissions", SIG_SET_PERMISSION);
+			method.setAccessible(true);
+			return (Integer) method.invoke(null, file, mode, uid, gid);
+		} catch (Exception e) {
+		}
+		
+		return -1;
+	}
+	
+	/**
+	 * 把 sd卡上 src 目录 链接到 私有目录 dst
+	 * 
+	 * <p>例：createLink("/mnt/sdcard/freesky", "/data/data/com.test/app_links/free")
+	 * 之后 /data/data/com.test/app_links/free -> /mnt/sdcard/freesky
+	 * 
+	 * @param src 源目录，在SD卡上
+	 * @param dst 目标路径完整
+	 * @return
+	 */
+	public static boolean createLink(String src, String dst) {
+		try {
+			String command = String.format("ln -s %s %s", src, dst);
+			Runtime runtime = Runtime.getRuntime();
+			Process ps = runtime.exec(command);
+			InputStream in = ps.getInputStream();
+			
+			int c;
+			while ((c = in.read()) != -1) {
+				System.out.print(c);// 如果你不需要看输出，这行可以注销掉
+			}
+			
+			in.close();
+			ps.waitFor();
+			
+			return true;
+		} catch (Exception e) {
+		}
+		
+		return false;
 	}
 }
